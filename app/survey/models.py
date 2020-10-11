@@ -8,9 +8,15 @@ class Survey(models.Model):
     title = models.CharField(max_length=256,default="")
     description = models.CharField(max_length=1000,default="")
 
+    def __str__(self):
+        return self.title
+
 class Question(models.Model):
     text = models.CharField(max_length=1000,default="")
-    yes_count = models.IntegerField()
-    no_count = models.IntegerField()
+    yes_count = models.IntegerField(default=0)
+    no_count = models.IntegerField(default=0)
     survey = models.ForeignKey(Survey,on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.text
     

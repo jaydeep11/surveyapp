@@ -1,26 +1,19 @@
-# from user import models
-
-# from common.decorators import meta_data_response, session_authorize,\
-#     catch_exception
-# from common.exceptions import InvalidSerializerInputException ,NotAcceptableError
-
 from rest_framework import generics, mixins, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from . import models
-
-# from .services import document_upload_service
-# from .services.social_login_service import GoogleLoginService,LinkedInLoginService
+from common.authorization import Authorization
+from common.decorators import session_authorize
+from .services.survey_service import SurveyService
+from .services.image_service import ImageService
 from django.conf import settings
-# from django.core.exceptions import ValidationError
-from django.utils import timezone
-from django.db import transaction
-from django.shortcuts import redirect
-from django.views.generic.base import RedirectView
 from . import serializers
 import jwt
 
-#User APIs
+import logging
+LOGGER = logging.getLogger(__name__)
+
+#Just for testing deployment
 class UserWelcome(APIView):
     def get(self, request, *args, **kwargs):
         return Response(
@@ -29,6 +22,7 @@ class UserWelcome(APIView):
             },
             status=status.HTTP_200_OK)
 
+#Auth API
 class UserLoginView(APIView):
     def post(self, request):
         serializer = serializers.UserLoginSerializer(data=request.data)
@@ -36,3 +30,50 @@ class UserLoginView(APIView):
             session_data = serializer.save()
             return Response(session_data, status=status.HTTP_200_OK)
         return Response({},status=status.HTTP_400_BAD_REQUEST)
+
+#API for creating a Survey
+class CreateSurveyView(APIView):
+    @session_authorize()
+    def post(self,request):
+        serializer = serializers.CreateSurveySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({}, status=status.HTTP_200_OK)
+        return Response({},status=status.HTTP_400_BAD_REQUEST)
+
+#API for taking a survey
+class TakeSurveyView(APIView):
+    @session_authorize()
+    def get(self, request, **kwargs):
+        survey_id = request.GET.get('survey_id')
+        response = SurveyService.getSurvey(survey_id=survey_id)
+        if not response:
+            return Response({},status = status.HTTP_400_BAD_REQUEST)
+        return Response(response, status=status.HTTP_200_OK)
+
+    @session_authorize()
+    def post(self,request):
+        serializer = serializers.TakeSurveySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({}, status=status.HTTP_200_OK)
+        return Response({},status=status.HTTP_400_BAD_REQUEST)
+
+#API for viewing result of a survey
+class SurveyResultView(APIView):
+    @session_authorize()
+    def get(self, request, **kwargs):
+        survey_id = request.GET.get('survey_id')
+        response = SurveyService.getSurveyResult(survey_id=survey_id)
+        if not response:
+            return Response({},status = status.HTTP_400_BAD_REQUEST)
+        return Response(response, status=status.HTTP_200_OK)
+
+class CreateThumbnailView(APIView):
+    
+    def get(self, request, **kwargs):
+        image_url = request.GET.get('image_url')
+        response = ImageService.generate_thumbnail(image_url)
+        if not response:
+            return Response({},status = status.HTTP_400_BAD_REQUEST)
+        return Response(response, status=status.HTTP_200_OK)
