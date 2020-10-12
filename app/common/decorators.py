@@ -1,6 +1,5 @@
+"""Custom decorators"""
 from functools import wraps
-from django.db import IntegrityError
-from django.http import Http404
 from django.conf import settings
 
 from rest_framework.response import Response
@@ -8,7 +7,7 @@ from rest_framework import status, serializers
 
 from common.authorization import Authorization
 
-
+"""Decorator to check whether session is authorized"""
 def session_authorize(*args, **kwargs):
     def deco(f):
         def abstract_session_token(request, **kwargs):

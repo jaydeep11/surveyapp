@@ -2,7 +2,7 @@ from survey.models import Token
 import jwt
 
 class Authorization(object):
-
+    """Method to check whether a given token is valid or not"""
     @classmethod
     def authorize_token(cls,encoded_token):
         try:

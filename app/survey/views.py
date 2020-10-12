@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from . import models
 from common.authorization import Authorization
 from common.decorators import session_authorize
+from common.custom_renders import JPEGRenderer , PNGRenderer
 from .services.survey_service import SurveyService
 from .services.image_service import ImageService
 from django.conf import settings
@@ -69,11 +70,17 @@ class SurveyResultView(APIView):
             return Response({},status = status.HTTP_400_BAD_REQUEST)
         return Response(response, status=status.HTTP_200_OK)
 
+#API for generating Thumbnail
 class CreateThumbnailView(APIView):
     
+    renderer_classes = [JPEGRenderer]
+
     def get(self, request, **kwargs):
         image_url = request.GET.get('image_url')
-        response = ImageService.generate_thumbnail(image_url)
-        if not response:
+        # response = HttpResponse(mimetype="image/png")
+        image = ImageService.generate_thumbnail(image_url)
+        # image.save(response, "PNG")
+        image_file = open("temp_image.jpg",'rb')
+        if not image:
             return Response({},status = status.HTTP_400_BAD_REQUEST)
-        return Response(response, status=status.HTTP_200_OK)
+        return Response(image_file,content_type = 'image/jpeg')
